@@ -49,8 +49,7 @@ namespace Checkers.Ux
 
 		static readonly Dictionary<Gameplay.MoveError, string> moveErrorMessages = new Dictionary<Gameplay.MoveError, string>()
 		{
-			{Gameplay.MoveError.Success, "Success!"},
-			{Gameplay.MoveError.Unknown, "Unknown!"}
+			{Gameplay.MoveError.Success, "Success!"}
 		};
 
 		void RefreshGameView()

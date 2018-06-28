@@ -10,17 +10,17 @@ namespace Checkers.Gameplay
 		public int x;
 		public int y;
 
-		public bool GetBetween(Position prev, ref Position between)
+		public static bool GetBetween(Position prev, Position next, ref Position between)
 		{
-			int diffX = this.x - prev.x;
-			int diffY = this.y - prev.y;
+			int diffX = next.x - prev.x;
+			int diffY = next.y - prev.y;
 
 			if(Math.Abs(diffX) == 2 && Math.Abs(diffY) == 2)
 			{
 				between = new Position()
 				{
-					x = this.x + Math.Sign(diffX),
-					y = this.y + Math.Sign(diffY)
+					x = prev.x + Math.Sign(diffX),
+					y = prev.y + Math.Sign(diffY)
 				};
 				return true;
 			}
@@ -28,6 +28,15 @@ namespace Checkers.Gameplay
 			{
 				return false;
 			}
+		}
+
+		public static Position GetBetween(Position prev, Position next)
+		{
+			Position between = new Position();
+			if (GetBetween(prev, next, ref between))
+				return between;
+			else
+				throw new System.Exception("Not inbetween position!");
 		}
 	}
 
@@ -51,11 +60,14 @@ namespace Checkers.Gameplay
 	public enum MoveError
 	{
 		Success = 0,
-		Unknown,
-		NotEnoughCells,
-		ContainsUnplayableCells,
-		NotYourPiece,
-		WrongMoveDirection
+		NotEnoughMoves, // CHECK
+		ContainsUnplayableCells, // CHECK
+		NotYourPiece, // CHECK
+		WrongMoveDirection, // CHECK
+		InvalidMoveLength, // CHECK
+		OnlyOneMoveAllowedIfFirstNotJump,
+		CantMoveOntoOtherPieces,
+		OnlyJumpOverOpponent
 	}
 
 	public class Move
@@ -79,7 +91,7 @@ namespace Checkers.Gameplay
 			Move newMove = new Move();
 
 			var arr = input.Trim().Split(' ');
-			foreach(var a in arr)
+			foreach (var a in arr)
 			{
 				if (a.Length != 2)
 					return false;
@@ -88,19 +100,6 @@ namespace Checkers.Gameplay
 			}
 
 			move = newMove;
-			return true;
-		}
-
-		public bool AllMoveInYDirection(int dir)
-		{
-			for (int i = 1; i < positions.Count; i++)
-			{
-				if( Math.Sign(positions[i].y - positions[i-1].y) != Math.Sign(dir) )
-				{
-					return false;
-				}
-			}
-
 			return true;
 		}
 	}
@@ -181,42 +180,67 @@ namespace Checkers.Gameplay
 
 		public Team CurrentTurn { get; private set; }
 
-
-
 		private MoveError TestMove(Move move)
 		{
-			if (move.positions.Count < 2)
-				return MoveError.NotEnoughCells;
+			var myTeam = CurrentTurn;
 
-			// Check unplayable
-			foreach(var p in move.positions)
+			if (move.positions.Count < 2)
+				return MoveError.NotEnoughMoves;
+
+			// Check the first piece is ok
+			var firstPos = move.positions[0];
+			if (!board.IsCellPlayable(firstPos))
 			{
-				if(!board.IsCellPlayable(p)) {
+				return MoveError.ContainsUnplayableCells;
+			}
+			else if (board[firstPos].team != myTeam)
+			{
+				return MoveError.NotYourPiece;
+			}
+
+			// Check each subsequent move
+			for (int i = 1; i < move.positions.Count; i++)
+			{
+				var curr = move.positions[i];
+				var prev = move.positions[i - 1];
+				if (!board.IsCellPlayable(curr))
+				{
 					return MoveError.ContainsUnplayableCells;
 				}
-			}
+				else if(board[curr].team != Team.Empty)
+				{
+					return MoveError.CantMoveOntoOtherPieces;
+				}
 
-			// Check if its your piece 
-			var firstPos = move.positions[0];
-			if (board[firstPos].team != CurrentTurn)
-				return MoveError.NotYourPiece;
-			
-			// TODO: Check if moving in valid direction
-			if(CurrentTurn == Team.X)
-			{
-				if (!move.AllMoveInYDirection(-1))
+				int diffX = curr.x - prev.x;
+				int diffY = curr.y - prev.y;
+
+				int absDiffX = Math.Abs(diffX);
+				int absDiffY = Math.Abs(diffY);
+				if( absDiffX != absDiffY || absDiffX == 0 || absDiffX > 2)
+				{
+					return MoveError.InvalidMoveLength;
+				}
+				else if (Math.Sign(diffY) != (CurrentTurn == Team.X ? -1 : 1))
+				{
 					return MoveError.WrongMoveDirection;
+				}
+
+				if (absDiffX == 1)
+				{
+					if (move.positions.Count > 2)
+						return MoveError.OnlyOneMoveAllowedIfFirstNotJump;
+
+					// TODO: check if jump exists
+				}
+				else
+				{
+					Position between = Position.GetBetween(prev, curr);
+					var otherTeam = board[between].team;
+					if (otherTeam == Team.Empty || otherTeam == myTeam)
+						return MoveError.OnlyJumpOverOpponent;
+				}
 			}
-			else
-			{
-				if (!move.AllMoveInYDirection(1))
-					return MoveError.WrongMoveDirection;
-			}
-
-
-			// TODO: Check first move NOT a jump AND normal play AND no other jumps exist
-
-			// TODO: Check if first move IS a jump AND all other moves are jumps
 
 			return MoveError.Success;
 		}
@@ -235,7 +259,7 @@ namespace Checkers.Gameplay
 					board[prev] = CellState.Empty;
 
 					Position between = new Position();
-					if(curr.GetBetween(prev, ref between)) {
+					if(Position.GetBetween(prev, curr, ref between)) {
 						board[between] = CellState.Empty;
 					}
 				}
