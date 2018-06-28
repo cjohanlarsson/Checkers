@@ -11,6 +11,7 @@ namespace Checkers.Ux
 		[SerializeField] InputField consoleInput;
 		[SerializeField] Button consoleSubmit;
 		[SerializeField] Text consoleMessage;
+		[SerializeField] Text consoleTurn;
 
 		Gameplay.Game game;
 
@@ -31,6 +32,7 @@ namespace Checkers.Ux
 					else
 					{
 						RefreshGameView();
+						ClearErrorMessage();
 					}
 				}
 				else
@@ -53,11 +55,15 @@ namespace Checkers.Ux
 		void RefreshGameView()
 		{
 			consoleBoard.text = game.BoardToString();
+			consoleTurn.text = game.CurrentTurn.ToString();
 		}
 
 		void DisplayErrorMessage(Gameplay.MoveError errorMsg)
 		{
-			consoleMessage.text = moveErrorMessages[errorMsg];
+			if (moveErrorMessages.ContainsKey(errorMsg))
+				consoleMessage.text = moveErrorMessages[errorMsg];
+			else
+				consoleMessage.text = errorMsg.ToString();
 		}
 
 		void DisplayErrorMessage(string errorMsg)
