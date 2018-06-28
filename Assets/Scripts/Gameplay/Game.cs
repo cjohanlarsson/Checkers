@@ -54,7 +54,8 @@ namespace Checkers.Gameplay
 		Unknown,
 		NotEnoughCells,
 		ContainsUnplayableCells,
-		NotYourPiece
+		NotYourPiece,
+		WrongMoveDirection
 	}
 
 	public class Move
@@ -87,6 +88,19 @@ namespace Checkers.Gameplay
 			}
 
 			move = newMove;
+			return true;
+		}
+
+		public bool AllMoveInYDirection(int dir)
+		{
+			for (int i = 1; i < positions.Count; i++)
+			{
+				if( Math.Sign(positions[i].y - positions[i-1].y) != Math.Sign(dir) )
+				{
+					return false;
+				}
+			}
+
 			return true;
 		}
 	}
@@ -186,8 +200,19 @@ namespace Checkers.Gameplay
 			var firstPos = move.positions[0];
 			if (board[firstPos].team != CurrentTurn)
 				return MoveError.NotYourPiece;
-
+			
 			// TODO: Check if moving in valid direction
+			if(CurrentTurn == Team.X)
+			{
+				if (!move.AllMoveInYDirection(-1))
+					return MoveError.WrongMoveDirection;
+			}
+			else
+			{
+				if (!move.AllMoveInYDirection(1))
+					return MoveError.WrongMoveDirection;
+			}
+
 
 			// TODO: Check first move NOT a jump AND normal play AND no other jumps exist
 
