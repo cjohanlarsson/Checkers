@@ -17,6 +17,7 @@ namespace Checkers.Ux
 		[SerializeField] bool aiEnabled;
 		[SerializeField] int boardSize;
 		[SerializeField] int boardHeight;
+		[SerializeField] float aiThinkTime;
 
 		Gameplay.Game game;
 
@@ -71,13 +72,13 @@ namespace Checkers.Ux
 						break;
 
 					// ai thinking ...
-					yield return new WaitForSeconds(Random.Range(0.1f, 0.2f));
+					yield return new WaitForSeconds(aiThinkTime * Random.Range(0.75f, 1.25f));
 					game.PlayMove(game.GetRandomValidMove());
 					RefreshGameView();
 
 					consoleAiThinking.SetActive(false);
 
-					yield return new WaitForSeconds(0.1f);
+					yield return new WaitForSeconds(0.25f);
 					consoleInputAnchor.SetActive(true);
 				}
 				else

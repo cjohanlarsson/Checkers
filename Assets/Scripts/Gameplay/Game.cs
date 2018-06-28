@@ -290,7 +290,7 @@ namespace Checkers.Gameplay
 							y = p.y + (yDir * 2),
 						};
 
-						if(IsValidJump(p,jump1) || IsValidJump(p,jump2))
+						if(IsValidJump(p,jump1, myTeam) || IsValidJump(p,jump2, myTeam))
 						{
 							return MoveError.MustJumpIfThereIsOne;
 						}
@@ -298,7 +298,7 @@ namespace Checkers.Gameplay
 				}
 				else
 				{
-					if (!IsValidJump(prev,curr))
+					if (!IsValidJump(prev,curr,myTeam))
 						return MoveError.OnlyJumpOverOpponent;
 				}
 			}
@@ -306,13 +306,11 @@ namespace Checkers.Gameplay
 			return MoveError.Success;
 		}
 
-		private bool IsValidJump(Position prev, Position next)
+		private bool IsValidJump(Position prev, Position next, Team myTeam)
 		{
 			if (!board.IsCellPlayable(prev) || !board.IsCellPlayable(next))
 				return false;
-
-
-			Team myTeam = board[prev].team;
+			
 			if (myTeam == Team.Empty || board[next].team != Team.Empty)
 				return false;
 			

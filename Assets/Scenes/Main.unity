@@ -935,9 +935,10 @@ MonoBehaviour:
   consoleTurn: {fileID: 505229186}
   consoleInputAnchor: {fileID: 1841196394}
   consoleAiThinking: {fileID: 794824707}
-  aiEnabled: 0
-  boardSize: 5
-  boardHeight: 1
+  aiEnabled: 1
+  boardSize: 8
+  boardHeight: 3
+  aiThinkTime: 1
 --- !u!1 &1626359497
 GameObject:
   m_ObjectHideFlags: 0
