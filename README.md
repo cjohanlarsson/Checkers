@@ -13,3 +13,8 @@ http://trickytoken.com/builds/CheckersWebGL/index.html
 Gameplay/Game.cs - code that manages Checkers game logic
 
 Ux/Manager.cs - code that manages the console view and AI
+
+
+## Known Bugs
+
+If the game ends on 'O' (the player) turn, the game over message isn't displayed.
