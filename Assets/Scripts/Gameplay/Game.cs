@@ -65,9 +65,9 @@ namespace Checkers.Gameplay
 		NotYourPiece, // CHECK
 		WrongMoveDirection, // CHECK
 		InvalidMoveLength, // CHECK
-		OnlyOneMoveAllowedIfFirstNotJump,
-		CantMoveOntoOtherPieces,
-		OnlyJumpOverOpponent
+		OnlyOneMoveAllowedIfFirstNotJump, // CHECK
+		CantMoveOntoOtherPieces, // CHECK
+		OnlyJumpOverOpponent // CHECK
 	}
 
 	public class Move
@@ -78,6 +78,11 @@ namespace Checkers.Gameplay
 		public Move() 
 		{
 			positions = new List<Position>();
+		}
+
+		public Move(Move move)
+		{
+			positions = new List<Position>(move.positions);	
 		}
 
 		/// <summary>
@@ -166,6 +171,34 @@ namespace Checkers.Gameplay
 		{
 			return board.GetLength(0);
 		}
+
+		public int GetTeamCount(Team team)
+		{
+			int cnt = 0;
+			foreach(var p in GetTeamPositions(team))
+			{
+				cnt++;
+			}
+			return cnt;
+		}
+
+		public IEnumerable<Position> GetTeamPositions(Team team)
+		{
+			for (int x = 0; x < board.GetLength(0); x++)
+			{
+				for (int y = 0; y < board.GetLength(1) ; y++)
+				{
+					if(board[x,y].team == team)
+					{
+						yield return new Position()
+						{
+							x = x,
+							y = y
+						};
+					}
+				}
+			}
+		}
 	}
 
 	public class Game
@@ -179,6 +212,16 @@ namespace Checkers.Gameplay
 		}
 
 		public Team CurrentTurn { get; private set; }
+
+		public bool GameIsOver
+		{
+			get; private set;
+		}
+
+		public Team GameWinner
+		{
+			get; private set;
+		}
 
 		private MoveError TestMove(Move move)
 		{
@@ -264,8 +307,87 @@ namespace Checkers.Gameplay
 					}
 				}
 				CurrentTurn = CurrentTurn == Team.O ? Team.X : Team.O;
+				CheckGameIsOver();
 			}
 			return err;
+		}
+
+		private void CheckGameIsOver()
+		{
+			if(GetRandomValidMove() == null)
+			{
+				GameIsOver = true;
+				if (board.GetTeamCount(Team.X) == 0)
+					GameWinner = Team.O;
+				else if (board.GetTeamCount(Team.O) == 0)
+					GameWinner = Team.X;
+			}
+		}
+
+		public Move GetRandomValidMove()
+		{
+			Move tmpMove = new Move();
+			List<Move> validJumps = new List<Move>();
+			List<Move> validSingles = new List<Move>();
+
+			Position[] attempts = new Position[4];
+			foreach(Position curr in board.GetTeamPositions(CurrentTurn))
+			{
+				int yDir = CurrentTurn == Team.O ? 1 : -1;
+
+				attempts[0] = new Position()
+				{
+					x = curr.x + 2,
+					y = curr.y + (yDir * 2),
+				};
+				attempts[1] = new Position()
+				{
+					x = curr.x - 2,
+					y = curr.y + (yDir * 2),
+				};
+				attempts[2] = new Position()
+				{
+					x = curr.x + 1,
+					y = curr.y + (yDir * 1),
+				};
+				attempts[3] = new Position()
+				{
+					x = curr.x - 1,
+					y = curr.y + (yDir * 1),
+				};
+
+				for (int i = 0; i < attempts.Length; i++)
+				{
+					tmpMove.positions.Clear();
+					tmpMove.positions.Add(curr);
+					tmpMove.positions.Add(attempts[i]);
+					if (this.TestMove(tmpMove) == MoveError.Success)
+					{
+						if (i < 2)
+						{
+							validJumps.Add(new Move(tmpMove));
+						}
+						else
+						{
+							validSingles.Add(new Move(tmpMove));
+						}
+					}
+				}
+			}
+
+			var rnd = new System.Random();
+			if (validJumps.Count > 0)
+			{
+				return validJumps[rnd.Next(0, validJumps.Count)];
+			}
+			else if (validSingles.Count > 0)
+			{
+				return validSingles[rnd.Next(0, validSingles.Count)];
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		public string BoardToString()

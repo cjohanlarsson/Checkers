@@ -12,6 +12,8 @@ namespace Checkers.Ux
 		[SerializeField] Button consoleSubmit;
 		[SerializeField] Text consoleMessage;
 		[SerializeField] Text consoleTurn;
+		[SerializeField] GameObject consoleInputAnchor;
+		[SerializeField] GameObject consoleAiThinking;
 
 		Gameplay.Game game;
 
@@ -46,6 +48,35 @@ namespace Checkers.Ux
 			RefreshGameView();
 		}
 
+		private IEnumerator Start()
+		{
+			consoleAiThinking.SetActive(false);
+
+			while(!game.GameIsOver)
+			{
+				while(game.CurrentTurn == Gameplay.Team.O)
+				{
+					yield return null;
+				}
+
+				consoleInputAnchor.SetActive(false);
+				consoleAiThinking.SetActive(true);
+				if (game.GameIsOver)
+					break;
+				
+				// ai thinking ...
+				yield return new WaitForSeconds(Random.Range(1, 3));
+				game.PlayMove( game.GetRandomValidMove() );
+				RefreshGameView();
+
+				consoleAiThinking.SetActive(false);
+
+				yield return new WaitForSeconds(0.5f);
+				consoleInputAnchor.SetActive(true);
+
+			}
+		}
+
 
 		static readonly Dictionary<Gameplay.MoveError, string> moveErrorMessages = new Dictionary<Gameplay.MoveError, string>()
 		{
@@ -56,10 +87,20 @@ namespace Checkers.Ux
 		{
 			consoleBoard.text = game.BoardToString();
 			consoleTurn.text = game.CurrentTurn.ToString();
+
+			if(game.GameIsOver)
+			{
+				var winner = game.GameWinner;
+				if (winner == Gameplay.Team.Empty)
+					DisplayMessage("Game Over: Nobody Won!");
+				else
+					DisplayMessage(string.Format("Game Over: {0} Won!", winner));
+			}
 		}
 
 		void DisplayErrorMessage(Gameplay.MoveError errorMsg)
 		{
+			consoleMessage.color = Color.red;
 			if (moveErrorMessages.ContainsKey(errorMsg))
 				consoleMessage.text = moveErrorMessages[errorMsg];
 			else
@@ -68,7 +109,14 @@ namespace Checkers.Ux
 
 		void DisplayErrorMessage(string errorMsg)
 		{
+			consoleMessage.color = Color.red;
 			consoleMessage.text = errorMsg;
+		}
+
+		void DisplayMessage(string msg)
+		{
+			consoleMessage.color = Color.green;
+			consoleMessage.text = msg;
 		}
 
 		void ClearErrorMessage()
