@@ -14,12 +14,15 @@ namespace Checkers.Ux
 		[SerializeField] Text consoleTurn;
 		[SerializeField] GameObject consoleInputAnchor;
 		[SerializeField] GameObject consoleAiThinking;
+		[SerializeField] bool aiEnabled;
+		[SerializeField] int boardSize;
+		[SerializeField] int boardHeight;
 
 		Gameplay.Game game;
 
 		void Awake()
 		{
-			game = new Gameplay.Game(8);
+			game = new Gameplay.Game(boardSize,boardHeight);
 
 			consoleSubmit.onClick.AddListener(() =>
 			{
@@ -54,26 +57,33 @@ namespace Checkers.Ux
 
 			while(!game.GameIsOver)
 			{
+				
 				while(game.CurrentTurn == Gameplay.Team.O)
 				{
 					yield return null;
 				}
 
-				consoleInputAnchor.SetActive(false);
-				consoleAiThinking.SetActive(true);
-				if (game.GameIsOver)
-					break;
-				
-				// ai thinking ...
-				yield return new WaitForSeconds(Random.Range(1, 3));
-				game.PlayMove( game.GetRandomValidMove() );
-				RefreshGameView();
+				if (aiEnabled)
+				{
+					consoleInputAnchor.SetActive(false);
+					consoleAiThinking.SetActive(true);
+					if (game.GameIsOver)
+						break;
 
-				consoleAiThinking.SetActive(false);
+					// ai thinking ...
+					yield return new WaitForSeconds(Random.Range(0.1f, 0.2f));
+					game.PlayMove(game.GetRandomValidMove());
+					RefreshGameView();
 
-				yield return new WaitForSeconds(0.5f);
-				consoleInputAnchor.SetActive(true);
+					consoleAiThinking.SetActive(false);
 
+					yield return new WaitForSeconds(0.1f);
+					consoleInputAnchor.SetActive(true);
+				}
+				else
+				{
+					yield return null;
+				}
 			}
 		}
 

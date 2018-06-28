@@ -67,7 +67,8 @@ namespace Checkers.Gameplay
 		InvalidMoveLength, // CHECK
 		OnlyOneMoveAllowedIfFirstNotJump, // CHECK
 		CantMoveOntoOtherPieces, // CHECK
-		OnlyJumpOverOpponent // CHECK
+		OnlyJumpOverOpponent, // CHECK
+		MustJumpIfThereIsOne // CHECK
 	}
 
 	public class Move
@@ -113,7 +114,7 @@ namespace Checkers.Gameplay
 	{
 		public CellState[,] board;
 
-		public Board(int boardSize)
+		public Board(int boardSize, int boardHeight)
 		{
 			board = new CellState[boardSize, boardSize];
 			for (int i = 0; i < boardSize; i++)
@@ -123,7 +124,7 @@ namespace Checkers.Gameplay
 					if (IsCellPlayable(i, j))
 					{
 						var state = new CellState();
-						state.team = j < 3 ? Team.O : (j >= (boardSize - 3) ? Team.X : Team.Empty);
+						state.team = j < boardHeight ? Team.O : (j >= (boardSize - boardHeight) ? Team.X : Team.Empty);
 						board[i, j] = state;
 					}
 				}
@@ -205,9 +206,9 @@ namespace Checkers.Gameplay
 	{
 		Board board;
 
-		public Game(int boardSize) 
+		public Game(int boardSize, int boardHeight) 
 		{
-			board = new Board(boardSize);
+			board = new Board(boardSize, boardHeight);
 			CurrentTurn = Team.O;
 		}
 
@@ -264,7 +265,7 @@ namespace Checkers.Gameplay
 				{
 					return MoveError.InvalidMoveLength;
 				}
-				else if (Math.Sign(diffY) != (CurrentTurn == Team.X ? -1 : 1))
+				else if (Math.Sign(diffY) != (myTeam == Team.X ? -1 : 1))
 				{
 					return MoveError.WrongMoveDirection;
 				}
@@ -274,18 +275,49 @@ namespace Checkers.Gameplay
 					if (move.positions.Count > 2)
 						return MoveError.OnlyOneMoveAllowedIfFirstNotJump;
 
-					// TODO: check if jump exists
+					// check if jump exists
+					foreach(var p in board.GetTeamPositions(myTeam))
+					{
+						int yDir = CurrentTurn == Team.O ? 1 : -1;
+						var jump1 = new Position()
+						{
+							x = p.x + 2,
+							y = p.y + (yDir * 2),
+						};
+						var jump2 = new Position()
+						{
+							x = p.x - 2,
+							y = p.y + (yDir * 2),
+						};
+
+						if(IsValidJump(p,jump1) || IsValidJump(p,jump2))
+						{
+							return MoveError.MustJumpIfThereIsOne;
+						}
+					}
 				}
 				else
 				{
-					Position between = Position.GetBetween(prev, curr);
-					var otherTeam = board[between].team;
-					if (otherTeam == Team.Empty || otherTeam == myTeam)
+					if (!IsValidJump(prev,curr))
 						return MoveError.OnlyJumpOverOpponent;
 				}
 			}
 
 			return MoveError.Success;
+		}
+
+		private bool IsValidJump(Position prev, Position next)
+		{
+			if (!board.IsCellPlayable(prev) || !board.IsCellPlayable(next))
+				return false;
+
+
+			Team myTeam = board[prev].team;
+			if (myTeam == Team.Empty || board[next].team != Team.Empty)
+				return false;
+			
+			Position between = new Position();
+			return (Position.GetBetween(prev, next, ref between) && board[between].team != Team.Empty && board[between].team != myTeam);
 		}
 
 		public MoveError PlayMove(Move move)
