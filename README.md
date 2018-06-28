@@ -1,9 +1,14 @@
 # Checkers
 
-A console version of checkers built in Unity.
+A console version of checkers built in Unity 2018.1.4f1 (with no extra packages or dependencies).
+
+## Build
 
 Try out the WebGL build here:
 http://trickytoken.com/builds/CheckersWebGL/index.html
+
+
+## Code
 
 Gameplay/Game.cs - code that manages Checkers game logic
 
