@@ -17,4 +17,4 @@ Ux/Manager.cs - code that manages the console view and AI
 
 ## Known Bugs
 
-If the game ends on 'O' (the player) turn, the game over message isn't displayed.
+If the game ends on 'O' (the player) turn, the game over message isn't displayed (due to it being clobbered around line 41 or Manager.cs).
