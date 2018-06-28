@@ -33,6 +33,7 @@ namespace Checkers.Ux
 					{
 						RefreshGameView();
 						ClearErrorMessage();
+						ClearInput();
 					}
 				}
 				else
@@ -74,6 +75,11 @@ namespace Checkers.Ux
 		void ClearErrorMessage()
 		{
 			consoleMessage.text = "";
+		}
+
+		void ClearInput()
+		{
+			consoleInput.text = "";
 		}
 	}
 }

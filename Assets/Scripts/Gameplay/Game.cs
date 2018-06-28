@@ -77,22 +77,13 @@ namespace Checkers.Gameplay
 		{
 			Move newMove = new Move();
 
-			var arr = input.Split(' ');
+			var arr = input.Trim().Split(' ');
 			foreach(var a in arr)
 			{
-				var arr2 = a.Split(',');
-				if (arr2.Length != 2)
+				if (a.Length != 2)
 					return false;
 
-				int x; int y;
-				if(int.TryParse(arr2[0], out x) && int.TryParse(arr2[1], out y) )
-				{
-					newMove.positions.Add(new Position() { x = x, y = y });
-				}
-				else
-				{
-					return false;
-				}
+				newMove.positions.Add(new Position() { x = a[1] - '0', y = a[0] - 'a' });
 			}
 
 			move = newMove;
@@ -233,7 +224,7 @@ namespace Checkers.Gameplay
 			var sb = new StringBuilder();
 			for (int y = board.GetSize() - 1; y >= 0; y--) 
 			{
-				sb.Append(y);
+				sb.Append((char)('a' + y));
 				sb.Append(' ');
 				for (int x = 0; x < board.GetSize(); x++) 
 				{
